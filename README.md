@@ -2,6 +2,8 @@
 
 A reproducible snapshot of the labelled email dataset, JEV and Gemma notebooks, Gemini Decision 1 comparison, and calculation code from [kariato/GTPracticum](https://github.com/kariato/GTPracticum). The source checkout was at commit `fe537a0d3a9160cc6806196659de8b0820645bb8`. Completed experiment outputs that were ignored in the original repository are included here so offline evaluation works after cloning. `SOURCE_MANIFEST.json` records the source files, byte sizes, and SHA-256 hashes; `ORIGINAL_README.md` preserves the original usage notes.
 
+For a complete explanation of calibration, including the motivation, validation sampling, equations, fitting algorithm, worked example, metrics, threshold tradeoffs, and reproduction steps, read the [dedicated calibration guide](calibration/README.md).
+
 ## What is being classified?
 
 Label **1** means the email substantively discusses or documents Enron accounting irregularities: misleading financial reporting, improper mark-to-market valuation, hidden losses, or misuse of special-purpose entities. Label **0** means unrelated or routine financial/accounting content without a substantive irregularity concern. A positive label indicates relevance for review, not proof of misconduct.
