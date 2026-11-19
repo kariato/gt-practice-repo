@@ -1,0 +1,23 @@
+{
+  "model": "google/gemma-4-26b-a4b-it",
+  "news_policy": "include",
+  "reasoning": {
+    "enabled": false
+  },
+  "metrics": {
+    "rows": 559,
+    "tp": 66,
+    "tn": 409,
+    "fp": 77,
+    "fn": 7,
+    "accuracy": 0.8497316636851521,
+    "precision": 0.46153846153846156,
+    "recall": 0.9041095890410958,
+    "f1": 0.6111111111111112,
+    "truncated": 0,
+    "total_cost_usd": 0.02249960922
+  },
+  "reasoning_telemetry_rows": 559,
+  "reasoning_violation_rows": [],
+  "baseline_reasoning": "unspecified; historical reasoning use unknown"
+}

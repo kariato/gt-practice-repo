@@ -1,0 +1,9 @@
+{
+  "source": "https://www.cs.cmu.edu/~enron/",
+  "download_url": "https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz",
+  "download_date": "2026-09-22",
+  "bytes": 443254787,
+  "sha256": "b3da1b3fe0369ec3140bb4fbce94702c33b7da810ec15d718b3fadf5cd748ca7",
+  "regular_files": 517401,
+  "validation": "Gzip integrity checked; full tar directory scanned."
+}

@@ -1,0 +1,25 @@
+{
+  "status": "recovered",
+  "model": "google/gemma-4-26b-a4b-it",
+  "news_policy": "include",
+  "reasoning_enabled": true,
+  "completed_rows_4096_cap": 214,
+  "saved_successful_response_cost_usd": 0.03547154556,
+  "failure_source_row": 112,
+  "attempts": [
+    {
+      "max_output_tokens": 4096,
+      "finish_reason": "length",
+      "reasoning_tokens": 4093
+    },
+    {
+      "max_output_tokens": 8192,
+      "finish_reason": "length",
+      "reasoning_tokens": 8189
+    }
+  ],
+  "cost_note": "Saved successful responses exclude failed, interrupted, and discarded responses; this is not total billed experiment cost.",
+  "historical_status": "incomplete",
+  "recovery_evaluation": "gemma4_reasoning_recovery_evaluation.json",
+  "recovered_total_rows": 559
+}

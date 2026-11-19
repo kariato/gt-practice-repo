@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Email monitoring: final cost and performance report</title>
+<style>
+:root { color-scheme: light; --ink: #203046; --muted: #586a7d; --line: #dbe3ec; --accent: #195b85; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #edf2f6; color: var(--ink); font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.page { max-width: 1180px; margin: 0 auto; background: white; min-height: 100vh; padding: 36px 48px 80px; }
+.topbar { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 14px; margin-bottom: 32px; font-size: .85rem; color: var(--muted); }
+.topbar strong { text-transform: uppercase; letter-spacing: .12em; }
+a { color: #145e91; text-underline-offset: 3px; }
+h1, h2, h3 { line-height: 1.25; color: #102b45; scroll-margin-top: 20px; }
+h1 { font-size: 2.45rem; letter-spacing: -.035em; max-width: 850px; margin: 0 0 24px; }
+h2 { font-size: 1.6rem; border-top: 1px solid var(--line); padding-top: 30px; margin-top: 42px; }
+h3 { font-size: 1.14rem; margin: 30px 0 12px; }
+p { margin: 14px 0; }
+li { margin: 8px 0; }
+strong { font-weight: 650; }
+nav { background: #f0f6fa; padding: 18px 24px; border-left: 4px solid var(--accent); margin: 28px 0 36px; }
+nav h2 { margin: 0 0 8px; padding: 0; border: 0; font-size: 1rem; }
+nav ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 25px; padding: 0; list-style: none; margin: 0; }
+nav li { margin: 3px 0; font-size: .88rem; }
+.table-wrap { overflow-x: auto; margin: 20px 0 24px; border: 1px solid var(--line); border-radius: 5px; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; line-height: 1.45; }
+th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: #173e5d; background: #edf4f9; font-weight: 650; }
+tbody tr:nth-child(even) { background: #f8fafc; }
+tbody tr:last-child td { border-bottom: 0; }
+pre { overflow-x: auto; background: #f4f7fa; padding: 18px 20px; border: 1px solid var(--line); border-radius: 5px; font-size: .82rem; line-height: 1.55; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+p code, li code { font-size: .87em; background: #f0f3f6; padding: 1px 4px; border-radius: 3px; }
+footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
+@media (max-width: 760px) { .page { padding: 24px 18px 45px; } h1 { font-size: 1.9rem; } h2 { font-size: 1.35rem; } nav ul { grid-template-columns: 1fr; } table { min-width: 700px; } .topbar { display: block; } }
+@media print { @page { margin: 15mm; } body { background: white; font-size: 10pt; } .page { margin: 0; padding: 0; max-width: none; } .topbar, nav { display: none; } h1 { font-size: 22pt; } h2 { font-size: 15pt; break-after: avoid; } h3 { break-after: avoid; } table { font-size: 8pt; } tr { break-inside: avoid; } thead { display: table-header-group; } .table-wrap { overflow: visible; } pre { white-space: pre-wrap; } a { color: inherit; } }
+</style>
+</head>
+<body>
+<main class="page">
+<div class="topbar"><strong>Project closeout</strong><a href="https://github.com/kariato/GTPracticum/blob/main/reports/email_monitoring_final_report.md">Markdown source on GitHub</a></div>
+<article><h1 id="email-monitoring-final-cost-and-performance-report">Email monitoring: final cost and performance report</h1>
+<p><strong>Project closeout · 2 October 2026</strong><br />
+<strong>Audience:</strong> senior management and the data science lead<br />
+<strong>Decision:</strong> which evaluated classifier should advance to an email monitoring pilot, under which operating conditions?<br />
+<strong>Evidence baseline:</strong> repository commit <code>4154ece</code>; 559 curated Enron test emails and a separate 500-email calibration sample.</p>
+<nav aria-label="Report contents"><h2>Contents</h2><ul><li><a href="#executive-overview">Executive overview</a></li><li><a href="#1-what-this-project-established">1. What this project established</a></li><li><a href="#2-which-option-fits-which-operating-conditions">2. Which option fits which operating conditions?</a></li><li><a href="#3-observed-benchmark-performance">3. Observed benchmark performance</a></li><li><a href="#4-calibration-and-threshold-selection">4. Calibration and threshold selection</a></li><li><a href="#5-strength-of-the-evidence">5. Strength of the evidence</a></li><li><a href="#6-cost-of-an-email-monitoring-service">6. Cost of an email monitoring service</a></li><li><a href="#7-latency-reliability-and-system-design">7. Latency, reliability, and system design</a></li><li><a href="#8-transition-plan-and-release-criteria">8. Transition plan and release criteria</a></li><li><a href="#9-project-closeout-assessment">9. Project closeout assessment</a></li><li><a href="#appendix-a-evidence-and-reproducibility">Appendix A. Evidence and reproducibility</a></li><li><a href="#appendix-b-facts-assumptions-and-decisions">Appendix B. Facts, assumptions, and decisions</a></li></ul></nav><h2 id="executive-overview">Executive overview</h2>
+<p><strong>Recommendation: advance the Gemma probability-score workflow to a bounded shadow pilot, with JEV evaluated alongside it as the option for a smaller review queue.</strong> Select the deployment threshold from newly labeled operational emails using the organization’s tolerance for missed cases and its review capacity. The completed project supports this pilot decision; it does not yet establish the performance or total cost of a live enterprise monitoring service.</p>
+<p>The strongest practical finding is that <strong>review workload dominates inference cost</strong>. The Gemma score workflow found 67 of 73 relevant emails, missed 6, and generated 74 false alarms. JEV at its raw 0.5 cutoff found 51, missed 22, and generated 24 false alarms. Gemma’s 16 additional relevant emails required 66 additional reviews in this benchmark. Neither outcome is a universal winner: the choice depends on the cost of missing a relevant email and the time available to investigate alerts.</p>
+<p><strong>Ensemble follow-up:</strong> a fixed 50/50 average of calibrated JEV and Gemma scores is a useful pilot challenger. At thresholds chosen to target 90% validation recall, it finds 66 test positives with 66 false alarms. JEV finds 65 positives with 78 false alarms, and Gemma finds 64 with 58 false alarms at their corresponding validation-selected thresholds. It does not improve on Gemma at the 95% validation target. The detailed ensemble analysis is in Section 4; these small gains require fresh-data confirmation.</p>
+<h3 id="the-management-decision-in-five-points">The management decision in five points</h3>
+<ol>
+<li><strong>When missed relevant emails are the main concern, start with Gemma’s score workflow.</strong> Its raw 0.5 cutoff achieved 91.8% recall at an observed inference cost of $0.01358 for 559 emails. It also exposes a score that can support a different review threshold after operational validation.</li>
+<li><strong>When review capacity is the binding constraint, start with JEV and a validated threshold.</strong> Its raw cutoff generated 75 alerts, versus Gemma score’s 141. JEV’s calibrated 0.5 cutoff reduced the queue to 63 alerts but missed 26 of 73 positives. That is an explicit loss of coverage.</li>
+<li><strong>Keep recovered reasoning as a challenger for difficult cases.</strong> It found one additional positive relative to the Gemma score run, with the same total number of false alarms. It also required recovery work and had materially longer recorded request times than the JSON run with reasoning disabled. One extra positive on this sample is insufficient evidence to make it the default.</li>
+<li><strong>Budget for review and integration before optimizing API spend.</strong> At an illustrative 100,000 emails per month, 1% relevant-email prevalence, three minutes per alert, and $60 per reviewer hour, the observed rates imply approximately $16,763 in monthly review labor for raw JEV and $47,976 for raw Gemma score. Their extrapolated API charges are only $3.32 and $2.43. These are sensitivity estimates, not production forecasts or vendor quotes.</li>
+<li><strong>Approve a limited pilot with measurable exit conditions.</strong> The missing evidence is operational: current-company labels, case-level usefulness, reviewer time, rare-event precision, end-to-end latency, and complete failure accounting. The project has completed a reproducible offline comparison; production rollout remains a separate decision.</li>
+</ol>
+<h3 id="what-management-should-authorize-next">What management should authorize next</h3>
+<p>Authorize a pilot using a fixed, approved email population and a capped review queue. Assign an operations owner to define relevant cases and acceptable misses, a data science owner to freeze the label policy and threshold, and an engineering owner to measure delivery latency and incomplete classifications. Fund measured labeling, review, and integration work. A full production budget cannot be justified from inference charges alone.</p>
+<h2 id="1-what-this-project-established">1. What this project established</h2>
+<h3 id="business-question-and-scope">Business question and scope</h3>
+<p>The classifier identifies <strong>substantive discussion or evidence of Enron accounting irregularities</strong>: misleading reporting, improper mark-to-market valuation, concealed losses, and misuse of special purpose entities. The broad benchmark counts relevant news and allegations as positive. A positive prediction is an email that merits review; it is not a finding that wrongdoing occurred.</p>
+<p>This is a retrospective case study with a company-specific prompt. It has not evaluated general fraud detection, phishing, malware, all employee misconduct, or arbitrary modern enterprise correspondence. Adapting the prompt to a current organization changes the task and requires new labels and evaluation.</p>
+<h3 id="evidence-and-completed-work">Evidence and completed work</h3>
+<ul>
+<li><strong>Test set:</strong> 559 emails, comprising 73 positives and 486 negatives; relevant-email prevalence is 13.06%.</li>
+<li><strong>Independent calibration sample:</strong> 500 emails from the training file, including 67 positives. Whitespace-normalized exact duplicates and exact overlaps with test emails were removed before sampling.</li>
+<li><strong>Coverage:</strong> each primary workflow has a saved prediction for all 559 emails. The recovered reasoning workflow combines 214 historical successes with 345 recovered predictions.</li>
+<li><strong>Input consistency:</strong> source IDs, curated labels, and email hashes were checked across runs. Historical CRLF line endings are accounted for when matching saved request hashes.</li>
+<li><strong>Input limit:</strong> classifier code caps email text at 20,000 characters. No saved test input is marked truncated. Attachments, thread reconstruction, mailbox ingestion, and reviewer actions were not part of this benchmark.</li>
+<li><strong>Completion status:</strong> offline classification, calibration, cost analysis, and comparison artifacts are complete. A continuously operating monitoring service has not been built or load-tested by this project.</li>
+</ul>
+<p>The experiments compare complete workflows. Prompts, news policies, output formats, generation settings, and recovery behavior differ. They do not isolate the causal effect of model choice or reasoning alone.</p>
+<h3 id="configurations-represented-in-the-results">Configurations represented in the results</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Recorded configuration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV</td>
+<td>Requested <code>typesafe/jev-1.13</code>; saved responses report <code>typesafe/jev-1.13-20260917</code>; native positive probability and a structured decision question</td>
+</tr>
+<tr>
+<td>Gemma JSON include/exclude</td>
+<td><code>google/gemma-4-26b-a4b-it</code>; temperature 0; 350-token output allowance; label, source type, and reason; historical reasoning setting unspecified</td>
+</tr>
+<tr>
+<td>Gemma JSON reasoning disabled</td>
+<td>Same Gemma model, include-news policy, temperature 0, 350-token allowance, and <code>reasoning.enabled=false</code>; saved provider Darkbloom</td>
+</tr>
+<tr>
+<td>Gemma probability score</td>
+<td>Same Gemma model; different one-token prompt; temperature 1, top-p 1, reasoning disabled; Darkbloom only, requiring supported parameters and both label log probabilities</td>
+</tr>
+<tr>
+<td>Recovered reasoning</td>
+<td>Same Gemma model; temperature 0; explicit reasoning; recovery seed 2 while historical seed was unspecified; final selected responses use a 4,096-token allowance for 558 rows and 8,192 for one; retries attempted larger budgets and one row required repetition penalty 1.1</td>
+</tr>
+</tbody>
+</table></div>
+<p>These configuration differences are part of each workflow's observed cost and behavior. No local model fine-tuning was performed.</p>
+<h2 id="2-which-option-fits-which-operating-conditions">2. Which option fits which operating conditions?</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Operating condition</th>
+<th>Recommended candidate</th>
+<th>Evidence supporting the choice</th>
+<th>Condition before deployment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Missing relevant emails is costly; reviewers can handle a larger queue</td>
+<td>Gemma probability score, with a recall-oriented threshold</td>
+<td>Raw 0.5 found 67/73 positives; it was the cheapest evaluated inference workflow</td>
+<td>Measure rare-event precision and validate the required recall on new operational labels; reserve review capacity</td>
+</tr>
+<tr>
+<td>Small analyst team; alerts must be prioritized tightly</td>
+<td>JEV probability score, with a capacity-based threshold</td>
+<td>Higher measured AP, 0.772 vs 0.735; raw 0.5 produced 75 alerts vs 141 for Gemma score</td>
+<td>Agree the acceptable miss rate; do not assume the default cutoff is optimal</td>
+</tr>
+<tr>
+<td>Exploring a better balance of coverage and review workload</td>
+<td>Evaluate the calibrated JEV/Gemma score ensemble alongside both models</td>
+<td>Fixed 50/50 scores found 66/73 positives with 66 false alarms at the 90% validation target</td>
+<td>Tune only on development data; confirm on fresh emails; measure two-request latency and failure behavior</td>
+</tr>
+<tr>
+<td>Need an intermediate coverage/workload tradeoff</td>
+<td>Gemma score with calibration and a tuned cutoff</td>
+<td>Calibrated 0.5 found 56/73, with 34 false alarms and 90 reviews</td>
+<td>Treat 0.5 as an evaluated reference point; choose the business cutoff on a separate validation sample</td>
+</tr>
+<tr>
+<td>Every alert needs a generated source type and short reason in the initial response</td>
+<td>Gemma JSON with reasoning disabled</td>
+<td>66/73 found; 77 false alarms; source type and reason saved; explicit reasoning configuration</td>
+<td>Check that reasons are grounded in the message and useful to reviewers; validate the production schema</td>
+</tr>
+<tr>
+<td>Specialist review of difficult or high-value cases; longer processing is acceptable</td>
+<td>Evaluate reasoning as a separate challenger or escalation experiment</td>
+<td>Recovered reasoning found 68/73; only one more than Gemma score</td>
+<td>Test the proposed escalation population and full retry cost; its combined-system benefit has not been measured</td>
+</tr>
+<tr>
+<td>The business explicitly excludes copied news and third-party commentary</td>
+<td>Gemma exclude-news workflow with policy-aligned labels</td>
+<td>Found 19/20 non-news positives; this is a different task from the broad benchmark</td>
+<td>Independently validate source labels; define how forwarded articles with internal commentary should be treated</td>
+</tr>
+<tr>
+<td>Strict high recall plus a very small queue</td>
+<td>No evaluated operating point is yet established as suitable</td>
+<td>At an assumed 1% prevalence, even calibrated JEV projects 3,903 alerts per 100,000 emails</td>
+<td>Improve or narrow the task, tune on new data, and measure coverage lost through any filtering</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Pilot default:</strong> deploy one selected workflow in shadow mode, which records scores and routes a bounded sample to reviewers without changing email delivery. Evaluate the other score model on the same pilot sample as a challenger. The production choice should follow the measured operational tradeoff.</p>
+<h2 id="3-observed-benchmark-performance">3. Observed benchmark performance</h2>
+<p>TP is a relevant email found; FN is a relevant email missed. FP is a false alarm; TN is a negative email correctly rejected. Recall measures coverage of relevant emails. Precision measures the useful fraction of the alert queue. Specificity measures the fraction of negative emails rejected.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>TP / FN</th>
+<th>FP / TN</th>
+<th>Recall</th>
+<th>Precision</th>
+<th>Specificity</th>
+<th>F1</th>
+<th>AP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV raw ≥0.5</td>
+<td>51 / 22</td>
+<td>24 / 462</td>
+<td>69.9%</td>
+<td>68.0%</td>
+<td>95.1%</td>
+<td>0.689</td>
+<td>0.772</td>
+</tr>
+<tr>
+<td>Gemma score raw ≥0.5</td>
+<td>67 / 6</td>
+<td>74 / 412</td>
+<td>91.8%</td>
+<td>47.5%</td>
+<td>84.8%</td>
+<td>0.626</td>
+<td>0.735</td>
+</tr>
+<tr>
+<td>Gemma JSON: include news</td>
+<td>67 / 6</td>
+<td>79 / 407</td>
+<td>91.8%</td>
+<td>45.9%</td>
+<td>83.7%</td>
+<td>0.612</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Gemma JSON: reasoning disabled</td>
+<td>66 / 7</td>
+<td>77 / 409</td>
+<td>90.4%</td>
+<td>46.2%</td>
+<td>84.2%</td>
+<td>0.611</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Gemma: recovered reasoning</td>
+<td>68 / 5</td>
+<td>74 / 412</td>
+<td>93.2%</td>
+<td>47.9%</td>
+<td>84.8%</td>
+<td>0.633</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Gemma JSON: exclude news</td>
+<td>19 / 54</td>
+<td>39 / 447</td>
+<td>26.0%</td>
+<td>32.8%</td>
+<td>92.0%</td>
+<td>0.290</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Interpretation.</strong> Gemma score and Gemma JSON with news included found the same number of positives, but the score workflow generated five fewer false alarms and cost about 40% less in inference. The JSON workflow offers a short reason and source type; whether those fields save reviewer time was not measured. Historical include-news JSON omitted the reasoning setting, so its reasoning behavior is unknown.</p>
+<p>JEV’s lower recall is accompanied by fewer false alarms and higher precision. This can be valuable when analysts cannot review a large queue. Its higher average precision (AP) suggests stronger overall ordering of relevant messages on this test set, but it does not prove that JEV will outperform at every review budget or at a common recall target. That requires a threshold-specific comparison on fresh data.</p>
+<p><strong>Why AP is blank for JSON runs.</strong> AP summarizes the precision–recall ranking across score thresholds. JSON classifiers saved discrete labels, so they do not provide the numeric ranking needed for a comparable AP measurement. Their one precision/recall pair is an operating point.</p>
+<p><strong>Why accuracy is not the decision metric.</strong> A classifier that marks every email negative would be 86.9% accurate here while missing all 73 positives. The business needs coverage and a manageable review queue, so this report emphasizes recall, false alarms, ranking, and total review effort.</p>
+<h3 id="the-exclude-news-result-answers-a-separate-business-question">The exclude-news result answers a separate business question</h3>
+<p>The news audit marks 161 emails as news, including 53 of the original 73 positives. On the original labels, exclude-news finds only 19/73 positives because rejecting relevant news conflicts with the broad benchmark policy.</p>
+<p>On the 398 annotated non-news emails, it finds 19/20 positives, with 39 false alarms: <strong>95.0% recall, 32.8% precision, and 89.7% specificity</strong>. If the policy-aligned label is applied to all 559 emails, there are 20 positives and 539 negatives; specificity becomes 92.8% because the 161 rejected news emails are now negatives. Those denominators must not be mixed.</p>
+<p>The 95% recall interval for 19/20 is approximately 76.4%–99.1%. The remaining miss is a university accounting job description previously identified as a possible labeling error; it remains counted in these results. The news annotations were assisted by rules and review after model results were available. They need independent confirmation before they support a deployment decision.</p>
+<h2 id="4-calibration-and-threshold-selection">4. Calibration and threshold selection</h2>
+<p>Calibration maps model scores onto an estimated probability of the curated positive label. It is useful for prioritization and cost decisions, but it does not turn a relevance score into the probability of actual misconduct.</p>
+<h3 id="a-0-5-cutoff-means-different-things-before-and-after-calibration">A 0.5 cutoff means different things before and after calibration</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Score / cutoff</th>
+<th>Found / missed</th>
+<th>False alarms</th>
+<th>Alerts to review</th>
+<th>Recall</th>
+<th>Precision</th>
+<th>Specificity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV raw ≥0.5</td>
+<td>51 / 22</td>
+<td>24</td>
+<td>75</td>
+<td>69.9%</td>
+<td>68.0%</td>
+<td>95.1%</td>
+</tr>
+<tr>
+<td>JEV calibrated ≥0.5</td>
+<td>47 / 26</td>
+<td>16</td>
+<td>63</td>
+<td>64.4%</td>
+<td>74.6%</td>
+<td>96.7%</td>
+</tr>
+<tr>
+<td>Gemma score raw ≥0.5</td>
+<td>67 / 6</td>
+<td>74</td>
+<td>141</td>
+<td>91.8%</td>
+<td>47.5%</td>
+<td>84.8%</td>
+</tr>
+<tr>
+<td>Gemma score calibrated ≥0.5</td>
+<td>56 / 17</td>
+<td>34</td>
+<td>90</td>
+<td>76.7%</td>
+<td>62.2%</td>
+<td>93.0%</td>
+</tr>
+</tbody>
+</table></div>
+<p>The Gemma calibrated cutoff removes 51 reviews compared with its raw cutoff, including 40 false alarms and 11 true positives. JEV calibration removes 12 reviews, including eight false alarms and four true positives. Calibration improved probability estimates on this benchmark, while using 0.5 on the transformed score changed the operational decision boundary.</p>
+<p>Both fitted mappings are monotonic, so they preserve ranking and AP. Calibration itself does not create a better ranking or a free recall improvement. A threshold can also be selected directly on raw scores; a calibrated scale makes the intended risk tradeoff easier to express if calibration transfers to the deployment population.</p>
+<h3 id="probability-quality">Probability quality</h3>
+<p>Lower values are better for Brier score (squared probability error), log loss (which penalizes confident mistakes), and ECE (the weighted gap between confidence and observed frequency across ten bins). ECE is descriptive and sensitive to binning and sample size.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Brier: raw → calibrated</th>
+<th>Log loss: raw → calibrated</th>
+<th>ECE: raw → calibrated</th>
+<th>AP, unchanged</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV</td>
+<td>0.0606 → 0.0570</td>
+<td>0.2023 → 0.1943</td>
+<td>0.0336 → 0.0248</td>
+<td>0.772</td>
+</tr>
+<tr>
+<td>Gemma score</td>
+<td>0.1348 → 0.0624</td>
+<td>1.3533 → 0.2009</td>
+<td>0.1394 → 0.0336</td>
+<td>0.735</td>
+</tr>
+</tbody>
+</table></div>
+<p>Raw Gemma token scores are strongly overconfident on this task. Among 130 test emails in its 0.9–1.0 score bin, the average raw score is about 99.6%, while only 50.8% have a positive curated label. The fitted calibration reduces this mismatch. The raw normalized token score should therefore be labeled as a model score in a review interface unless a suitable calibrator has been validated.</p>
+<p>The Gemma score workflow normalizes the probabilities of the exact <code>0</code> and <code>1</code> tokens, uses a one-token response, temperature 1, top-p 1, and reasoning disabled. Predictions come from the normalized score rather than the sampled token. All 1,059 recorded validation and test requests supplied both label probabilities and reported zero reasoning tokens. This establishes coverage for those saved requests, not future provider availability.</p>
+<h3 id="thresholds-selected-on-validation-data">Thresholds selected on validation data</h3>
+<p>The existing procedure selected a calibrated threshold by maximizing F1 on the 500-email validation sample. These are the resulting <strong>test-set</strong> metrics:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Validation-selected calibrated cutoff</th>
+<th>Test recall</th>
+<th>Test precision</th>
+<th>Test F1</th>
+<th>Test alerts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV</td>
+<td>0.348425</td>
+<td>71.2%</td>
+<td>63.4%</td>
+<td>0.671</td>
+<td>82</td>
+</tr>
+<tr>
+<td>Gemma score</td>
+<td>0.478497</td>
+<td>78.1%</td>
+<td>59.4%</td>
+<td>0.675</td>
+<td>96</td>
+</tr>
+</tbody>
+</table></div>
+<p>F1 gives a particular balance between precision and recall; it does not encode analyst capacity or the business cost of a missed case. The F1-selected cutoffs are therefore useful experimental references, not approved business thresholds. Their test F1 also does not improve on every 0.5 reference point.</p>
+<p>For deployment, first define a recall requirement and queue limit, then select a threshold on a representative validation sample. Freeze the prompt, model, provider constraints, calibrator, and threshold before evaluating on a later untouched sample. If no threshold meets both requirements, report the gap explicitly.</p>
+<h3 id="recall-targets-chosen-on-validation-data">Recall targets chosen on validation data</h3>
+<p>For a decision closer to monitoring requirements, this final analysis also selects the highest threshold that reaches at least 90% or 95% recall on the 500 validation emails, then applies it unchanged to the 559 test emails. The threshold search uses validation labels only; all resulting test outcomes are reported. These are additional exploratory analyses of an already inspected test set, so they do not restore an untouched confirmatory evaluation.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Validation target</th>
+<th>Calibrated cutoff</th>
+<th>Achieved validation recall</th>
+<th>Test recall</th>
+<th>Test false alarms</th>
+<th>Test alerts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV</td>
+<td>90%</td>
+<td>0.072681</td>
+<td>91.0% (61/67)</td>
+<td>89.0% (65/73)</td>
+<td>78</td>
+<td>143</td>
+</tr>
+<tr>
+<td>JEV</td>
+<td>95%</td>
+<td>0.054978</td>
+<td>95.5% (64/67)</td>
+<td>93.2% (68/73)</td>
+<td>92</td>
+<td>160</td>
+</tr>
+<tr>
+<td>Gemma score</td>
+<td>90%</td>
+<td>0.170838</td>
+<td>91.0% (61/67)</td>
+<td>87.7% (64/73)</td>
+<td>58</td>
+<td>122</td>
+</tr>
+<tr>
+<td>Gemma score</td>
+<td>95%</td>
+<td>0.101736</td>
+<td>95.5% (64/67)</td>
+<td>91.8% (67/73)</td>
+<td>73</td>
+<td>140</td>
+</tr>
+</tbody>
+</table></div>
+<p>Neither model sustains its requested validation recall target on test. At the 95% validation target, JEV finds 68 test positives with 92 false alarms, while Gemma score finds 67 with 73 false alarms. JEV can reach higher recall by lowering its threshold; it then creates a much larger queue than its raw 0.5 operating point. The raw-default comparison is therefore a comparison of operating choices, not a fixed capability limit for either model.</p>
+<p>For the pilot, retain both score workflows until operational validation identifies the better coverage/workload tradeoff. The raw cutoffs used for these calculations are retained in the aggregate JSON so threshold ties can be reproduced exactly. No additional model API requests were needed for this analysis.</p>
+<h3 id="ensemble-feasibility-jev-plus-gemma-score">Ensemble feasibility: JEV plus Gemma score</h3>
+<p><strong>Recommendation: evaluate a score ensemble as a challenger in the pilot.</strong> A fixed 50/50 average of the two calibrated scores shows a modest improvement at one useful operating point. The evidence supports another controlled comparison; it does not establish an ensemble as the production winner.</p>
+<p>This analysis combines JEV with the Gemma probability-score workflow on the same emails and broad include-news definition. No additional model requests were made. The 500 validation emails and 559 test emails were matched by source ID and label, with input hashes checked for the underlying predictions.</p>
+<h4 id="method-and-threshold-selection">Method and threshold selection</h4>
+<p>The exploratory combination is:</p>
+<pre><code class="language-text">ensemble_score = 0.5 × calibrated_JEV_score + 0.5 × calibrated_Gemma_score
+</code></pre>
+<p>The weights were fixed at 50/50; they were not fitted or selected by searching the test outcomes. Each model retains its previously fitted sigmoid calibrator. For each of the 90% and 95% validation recall targets, the highest ensemble cutoff meeting that target is selected on validation labels and then applied unchanged to the test emails. The selected ensemble cutoffs are approximately 0.126026 and 0.084440, respectively.</p>
+<p>Averaging calibrated probabilities is a standard soft-voting approach. Calibration is particularly relevant here because Gemma's raw token scores were overconfident. The averaged score still needs its own calibration assessment before it is presented as an operational probability. See the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.VotingClassifier.html">scikit-learn soft-voting documentation</a>.</p>
+<h4 id="what-the-observed-results-show">What the observed results show</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Validation recall target</th>
+<th>Test positives found</th>
+<th>Test recall</th>
+<th>Test false alarms</th>
+<th>Test reviews</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV</td>
+<td>90%</td>
+<td>65/73</td>
+<td>89.0%</td>
+<td>78</td>
+<td>143</td>
+</tr>
+<tr>
+<td>Gemma score</td>
+<td>90%</td>
+<td>64/73</td>
+<td>87.7%</td>
+<td>58</td>
+<td>122</td>
+</tr>
+<tr>
+<td>50/50 score ensemble</td>
+<td>90%</td>
+<td>66/73</td>
+<td>90.4%</td>
+<td>66</td>
+<td>132</td>
+</tr>
+<tr>
+<td>JEV</td>
+<td>95%</td>
+<td>68/73</td>
+<td>93.2%</td>
+<td>92</td>
+<td>160</td>
+</tr>
+<tr>
+<td>Gemma score</td>
+<td>95%</td>
+<td>67/73</td>
+<td>91.8%</td>
+<td>73</td>
+<td>140</td>
+</tr>
+<tr>
+<td>50/50 score ensemble</td>
+<td>95%</td>
+<td>67/73</td>
+<td>91.8%</td>
+<td>77</td>
+<td>144</td>
+</tr>
+</tbody>
+</table></div>
+<p>At the 90% validation target, the ensemble finds one more positive than JEV while removing 12 false alarms and 11 total reviews. Compared with Gemma, it finds two more positives while adding eight false alarms and ten reviews. These cutoffs share a validation target; their achieved test recall differs, so this is not a comparison at identical test recall.</p>
+<p>At the 95% validation target, the ensemble and Gemma both find 67 positives, but the ensemble generates four more false alarms. JEV finds one additional positive, with 15 more false alarms than the ensemble. The ensemble therefore does not improve every operating choice.</p>
+<p>The ensemble's test AP is <strong>0.781</strong>, compared with <strong>0.772 for JEV</strong> and <strong>0.735 for Gemma score</strong>. This is a small descriptive ranking improvement; its statistical uncertainty has not been estimated. At a fixed ensemble cutoff of 0.5, the result is 50 positives found, 22 false alarms, and 68.5% recall. A useful ensemble still requires a threshold appropriate to the business objective.</p>
+<h4 id="why-voting-on-labels-adds-little-here">Why voting on labels adds little here</h4>
+<p>At the original raw 0.5 cutoffs, all 51 positives found by JEV are also found by Gemma. Gemma finds 16 additional positives, while both miss six. There are no positive emails uniquely found by JEV at those cutoffs.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Raw 0.5 decisions</th>
+<th>Positives found</th>
+<th>False alarms</th>
+<th>Total reviews</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV alone</td>
+<td>51</td>
+<td>24</td>
+<td>75</td>
+</tr>
+<tr>
+<td>Gemma score alone</td>
+<td>67</td>
+<td>74</td>
+<td>141</td>
+</tr>
+<tr>
+<td>Alert when at least one model is positive</td>
+<td>67</td>
+<td>75</td>
+<td>142</td>
+</tr>
+<tr>
+<td>Alert only when both models are positive</td>
+<td>51</td>
+<td>23</td>
+<td>74</td>
+</tr>
+</tbody>
+</table></div>
+<p>These results explain why adding JEV's yes/no decision gives little benefit to Gemma at the default cutoffs. The score average can still use information in the relative strengths of their predictions, even where the hard labels overlap.</p>
+<h4 id="cost-operational-implications-and-next-experiment">Cost, operational implications, and next experiment</h4>
+<p>Running both models on every email would sum to <strong>$0.03211422 for the 559-message workload</strong>, or approximately <strong>$57.45 per million benchmark-like emails</strong>. Gemma score alone extrapolates to $24.29 and JEV to $33.16. These are saved inference charges scaled by volume; they exclude additional failures and service overhead. The ensemble requires two model requests per email, and its combined latency and availability have not been measured.</p>
+<p>The additional API spend is small relative to the report's review-labor scenarios. Whether the ensemble is worthwhile depends on useful detections and the review queue, rather than its AP improvement alone. A production design must also define what happens when one component is unavailable; silently switching to a single score would change the meaning of the ensemble threshold.</p>
+<p>The next experiment should compare the fixed 50/50 baseline with a small number of weights selected on development data, or a regularized combiner trained on the two scores. Compare the chosen combination with both individual models at an agreed recall target or review budget. Keep related threads together, separate tuning from final evaluation, and confirm on a fresh sample before adopting a weight or threshold. Add reasoning only if it demonstrates further value on the cases routed to it.</p>
+<p><strong>Evidence limit:</strong> this is an exploratory extension on an already inspected test set. Calibration and cutoff selection reuse the same validation sample, and the ensemble idea was considered after examining the earlier results. The gains involve only a few emails. This supports a pilot challenger, not a claim of a confirmed production improvement.</p>
+<h2 id="5-strength-of-the-evidence">5. Strength of the evidence</h2>
+<h3 id="uncertainty-around-measured-rates">Uncertainty around measured rates</h3>
+<p>These Wilson intervals use 73 positive and 486 negative observations and assume independent emails. Repeated or related threads can make them optimistic.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Recall point estimate</th>
+<th>Approximate 95% interval</th>
+<th>Specificity point estimate</th>
+<th>Approximate 95% interval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV raw ≥0.5</td>
+<td>69.9%</td>
+<td>58.6%–79.2%</td>
+<td>95.1%</td>
+<td>92.8%–96.7%</td>
+</tr>
+<tr>
+<td>Gemma score raw ≥0.5</td>
+<td>91.8%</td>
+<td>83.2%–96.2%</td>
+<td>84.8%</td>
+<td>81.3%–87.7%</td>
+</tr>
+<tr>
+<td>Gemma: recovered reasoning</td>
+<td>93.2%</td>
+<td>84.9%–97.0%</td>
+<td>84.8%</td>
+<td>81.3%–87.7%</td>
+</tr>
+</tbody>
+</table></div>
+<p>One positive email changes recall by 1.37 percentage points. The recovered reasoning result and Gemma score result differ by exactly one positive. A row-level comparison shows that reasoning recovers one positive missed by the score run, loses none of its detected positives, removes three false alarms, and introduces three other false alarms. This is a useful candidate improvement, but insufficient evidence that the gain will repeat in deployment.</p>
+<p>The headline JEV/Gemma tradeoff is substantial within this sample. The project has not estimated a confidence interval for the AP difference, performed a production-domain comparison, or established performance on the most costly incident categories.</p>
+<h3 id="limits-that-affect-the-rollout-decision">Limits that affect the rollout decision</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Evidence limitation</th>
+<th>Consequence for management and data science</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Curated historical Enron emails and a company-specific prompt</td>
+<td>Performance cannot be assumed to transfer to a current enterprise mailbox</td>
+</tr>
+<tr>
+<td>Test labels and errors were inspected during iterative analysis</td>
+<td>The comparison is descriptive; a new locked test sample is needed for confirmation</td>
+</tr>
+<tr>
+<td>559 test rows contain 554 unique whitespace-normalized texts</td>
+<td>Exact repeats exist; near-duplicate articles and related threads were not removed</td>
+</tr>
+<tr>
+<td>500 calibration emails contain 67 positives</td>
+<td>Calibration in rare score regions is uncertain and reflects the curated class balance</td>
+</tr>
+<tr>
+<td>News audit was informed by earlier model outputs</td>
+<td>Policy-specific estimates may be optimistic</td>
+</tr>
+<tr>
+<td>Different prompts, token budgets, and sampling settings</td>
+<td>Report workflow outcomes; do not attribute differences solely to reasoning or model architecture</td>
+</tr>
+<tr>
+<td>Reasoning recovery mixes historical and recovered requests</td>
+<td>It is not a single uniform configuration; earlier failed/interrupted charges are incomplete</td>
+</tr>
+<tr>
+<td>No mailbox, attachment, reviewer, or case-resolution experiment</td>
+<td>Case detection, time saved, operational latency, and business return remain unmeasured</td>
+</tr>
+</tbody>
+</table></div>
+<p>Future validation should group related threads and near-duplicate content, use a chronological holdout, and measure relevant subgroups such as source type, message length, and actual incident category. A negative-message sample is essential: reviewing alerts alone cannot measure recall or calibrate the miss rate.</p>
+<h2 id="6-cost-of-an-email-monitoring-service">6. Cost of an email monitoring service</h2>
+<h3 id="6-1-observed-inference-charges-and-volume-sensitivity">6.1 Observed inference charges and volume sensitivity</h3>
+<p>The following figures use reported OpenRouter charges from the saved runs, divided by 559 and multiplied by volume. They assume the same email-length distribution, prompt, response format, and provider economics. <strong>They are historical workload extrapolations, not current list prices or production quotes.</strong> They exclude infrastructure, integration, human review, storage, taxes or account fees, and unrecorded failures.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Observed 559-email cost</th>
+<th>10,000 emails</th>
+<th>100,000 emails</th>
+<th>1 million emails</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV raw ≥0.5</td>
+<td>$0.01853</td>
+<td>$0.33</td>
+<td>$3.32</td>
+<td>$33.16</td>
+</tr>
+<tr>
+<td>Gemma score raw ≥0.5</td>
+<td>$0.01358</td>
+<td>$0.24</td>
+<td>$2.43</td>
+<td>$24.29</td>
+</tr>
+<tr>
+<td>Gemma JSON: include news</td>
+<td>$0.02261</td>
+<td>$0.40</td>
+<td>$4.05</td>
+<td>$40.45</td>
+</tr>
+<tr>
+<td>Gemma JSON: reasoning disabled</td>
+<td>$0.02250</td>
+<td>$0.40</td>
+<td>$4.02</td>
+<td>$40.25</td>
+</tr>
+<tr>
+<td>Gemma: recovered reasoning</td>
+<td>≥$0.09802</td>
+<td>≥$1.75</td>
+<td>≥$17.54</td>
+<td>≥$175.35</td>
+</tr>
+<tr>
+<td>Gemma JSON: exclude news</td>
+<td>$0.02259</td>
+<td>$0.40</td>
+<td>$4.04</td>
+<td>$40.41</td>
+</tr>
+</tbody>
+</table></div>
+<p>Calibrated JEV and calibrated Gemma score reuse the same test responses and therefore have the same per-email API cost as their corresponding raw scores. The separate validation requests cost $0.01616 for JEV and $0.01147 for Gemma, or $0.02763 combined. That is only the recorded API cost of calibration data collection; it excludes labeling and staff work.</p>
+<p>At one million benchmark-like emails, the score workflow extrapolates to about $24 in API charges, JEV to $33, and the JSON workflows to about $40. These small differences should not drive a decision that changes thousands of monthly reviews. Future messages with longer bodies, attachments, extra prompts, or additional retries can change this cost profile.</p>
+<h3 id="6-2-recovered-reasoning-reconcile-the-cost-before-comparing-it">6.2 Recovered reasoning: reconcile the cost before comparing it</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Cost component</th>
+<th style="text-align:right">Recorded USD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>214 retained historical successful requests</td>
+<td style="text-align:right">$0.03547155</td>
+</tr>
+<tr>
+<td>All 349 recovery attempts, including four failed responses</td>
+<td style="text-align:right">$0.06239245</td>
+</tr>
+<tr>
+<td>Additional 8,192-token pilot success not selected for the combined result</td>
+<td style="text-align:right">$0.00015872</td>
+</tr>
+<tr>
+<td><strong>Known experiment cost lower bound</strong></td>
+<td style="text-align:right"><strong>$0.09802272</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>The selected 559 successful responses alone sum to $0.09062779. That smaller number excludes $0.00723621 of recorded failed recovery responses and the additional pilot. Earlier failed or interrupted attempts are not fully billed in the available records, so the report uses <strong>at least $0.09802</strong> as the experiment total.</p>
+<p>The ≥$175.35 per million figure is a scaled lower bound from this experiment, including its recovery overhead. It is not a steady-state service estimate. It is at least 7.2 times the observed Gemma score inference cost, but the absolute difference is still small beside human review costs. The stronger reason to defer default reasoning is the limited demonstrated gain plus unresolved operational behavior.</p>
+<h3 id="6-3-human-review-changes-the-economics">6.3 Human review changes the economics</h3>
+<p><strong>Illustrative assumptions:</strong> 100,000 incoming emails per month; 1% genuinely relevant; three minutes to review each alert; $60 per fully loaded reviewer hour. Each alert costs $3 to review. Benchmark recall and false-positive rates are assumed to remain constant. No thread grouping, duplicate suppression, or reviewer productivity improvement is assumed.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Operating point</th>
+<th>True alerts</th>
+<th>False alerts</th>
+<th>Missed positives</th>
+<th>All alerts</th>
+<th>Review hours</th>
+<th>Review labor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV raw ≥0.5</td>
+<td>699</td>
+<td>4,889</td>
+<td>301</td>
+<td>5,588</td>
+<td>279</td>
+<td>$16,763</td>
+</tr>
+<tr>
+<td>JEV calibrated ≥0.5</td>
+<td>644</td>
+<td>3,259</td>
+<td>356</td>
+<td>3,903</td>
+<td>195</td>
+<td>$11,709</td>
+</tr>
+<tr>
+<td>Gemma score raw ≥0.5</td>
+<td>918</td>
+<td>15,074</td>
+<td>82</td>
+<td>15,992</td>
+<td>800</td>
+<td>$47,976</td>
+</tr>
+<tr>
+<td>Gemma score calibrated ≥0.5</td>
+<td>767</td>
+<td>6,926</td>
+<td>233</td>
+<td>7,693</td>
+<td>385</td>
+<td>$23,079</td>
+</tr>
+<tr>
+<td>Gemma: recovered reasoning</td>
+<td>932</td>
+<td>15,074</td>
+<td>68</td>
+<td>16,006</td>
+<td>800</td>
+<td>$48,017</td>
+</tr>
+</tbody>
+</table></div>
+<p>Counts and costs are rounded independently. Inference adds approximately $2.43–$3.32 for the score models, or at least $17.54 for the scaled reasoning experiment. The table excludes investigation after initial triage and the financial or operational impact of missed cases.</p>
+<p>With 160 fully productive review hours per person per month, these queues would consume approximately 1.75 reviewer-equivalents for raw JEV, 1.22 for calibrated JEV, 5.00 for raw Gemma score, and 2.40 for calibrated Gemma score. Staffing would need additional allowance for leave, training, coordination, and follow-up work. These are workload equivalents, not a hiring plan.</p>
+<p><strong>Marginal decision example.</strong> In this 1% scenario, raw Gemma score finds about 219 more relevant emails than raw JEV and requires roughly 10,404 extra reviews. Its additional review-plus-inference cost is about $31,212 per month, or <strong>$142 per additional relevant email found</strong>. If the expected avoided loss per additional detected email exceeds that amount, the higher-recall option may be economically preferable under these assumptions. The project has not measured that loss, and several emails may describe the same underlying case. This is a break-even illustration, not a claimed return on investment.</p>
+<p>A total-cost model should use:</p>
+<pre><code class="language-text">Monthly operating cost = API charges + queue/storage/monitoring costs
+                       + alert reviews × minutes per review × hourly cost / 60
+                       + investigation and quality-audit costs
+                       + support and maintenance
+
+Decision cost can additionally include expected loss from missed cases
+and costs caused by false escalations. Those values require business input.
+</code></pre>
+<h3 id="6-4-rare-relevant-emails-make-precision-worse">6.4 Rare relevant emails make precision worse</h3>
+<p>The benchmark has 13.1% positives. In a general mailbox the relevant fraction may be much smaller; this project has not measured it. The table shows what happens if recall and the false-positive rate stay fixed while prevalence changes:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Operating point</th>
+<th>Precision if 0.1% relevant</th>
+<th>Precision if 1% relevant</th>
+<th>Precision at benchmark 13.1%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JEV raw ≥0.5</td>
+<td>1.40%</td>
+<td>12.50%</td>
+<td>68.00%</td>
+</tr>
+<tr>
+<td>JEV calibrated ≥0.5</td>
+<td>1.92%</td>
+<td>16.50%</td>
+<td>74.60%</td>
+</tr>
+<tr>
+<td>Gemma score raw ≥0.5</td>
+<td>0.60%</td>
+<td>5.74%</td>
+<td>47.52%</td>
+</tr>
+<tr>
+<td>Gemma score calibrated ≥0.5</td>
+<td>1.09%</td>
+<td>9.97%</td>
+<td>62.22%</td>
+</tr>
+<tr>
+<td>Gemma: recovered reasoning</td>
+<td>0.61%</td>
+<td>5.82%</td>
+<td>47.89%</td>
+</tr>
+</tbody>
+</table></div>
+<p>At 1% prevalence, Gemma’s raw precision falls from 47.5% to about 5.7% in this sensitivity calculation. At 0.1%, it is about 0.6%. That is why copying the benchmark precision into a production business case would materially understate the review burden.</p>
+<p>For prevalence <code>p</code>, recall <code>r</code>, and false-positive rate <code>f</code>:</p>
+<pre><code class="language-text">Expected true alerts  = N × p × r
+Expected false alerts = N × (1 − p) × f
+Expected misses       = N × p × (1 − r)
+Expected precision    = (p × r) / (p × r + (1 − p) × f)
+</code></pre>
+<p>If the organization can review at most 2,000 of 100,000 monthly emails and requires 90% recall at 1% prevalence, the permitted false-positive rate is approximately <strong>1.11%</strong>. None of the evaluated operating points establishes that combination. Raising a threshold or filtering content may reduce the queue, but its lost coverage must be measured. Review capacity should influence the experiment design before rollout.</p>
+<h2 id="7-latency-reliability-and-system-design">7. Latency, reliability, and system design</h2>
+<h3 id="what-timing-data-actually-show">What timing data actually show</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workflow with recorded timing</th>
+<th>Rows</th>
+<th>Median</th>
+<th>95th percentile</th>
+<th>Maximum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemma JSON: reasoning disabled</td>
+<td>559</td>
+<td>1.12 s</td>
+<td>1.65 s</td>
+<td>2.56 s</td>
+</tr>
+<tr>
+<td>Gemma: recovered reasoning</td>
+<td>559</td>
+<td>6.24 s</td>
+<td>15.73 s</td>
+<td>71.42 s</td>
+</tr>
+</tbody>
+</table></div>
+<p>These are recorded successful-call latencies, not email-arrival-to-alert times or controlled load-test results. The recovered column mixes historical and recovery requests; it does not include the full time spent in earlier failed attempts, interruptions, or queues. It shows roughly 5.6 times the median and 9.5 times the 95th-percentile latency of the JSON run with reasoning disabled.</p>
+<p>Comparable timing was not saved for JEV or the Gemma score workflow. The one-token score format is economical, but this evidence cannot establish it as the fastest option. Ten configured workers do not by themselves demonstrate sustainable throughput or a service-level objective.</p>
+<p>The recovery journal contains 345 successes and four failed responses across 349 attempts. That is a record of a targeted recovery operation, not an unbiased estimate of production availability. One email required additional provider/repetition settings after exhausting earlier output budgets. All 559 final predictions are present, but completeness was achieved with intervention and retries.</p>
+<h3 id="proposed-monitoring-flow">Proposed monitoring flow</h3>
+<pre><code class="language-text">Approved email feed
+  → durable ingestion queue and message identity
+  → text extraction and explicit scope checks
+  → versioned classifier request
+  → schema/score validation or unresolved-message queue
+  → calibrated score and business threshold
+  → prioritized reviewer queue and evidence link
+  → reviewer outcome, sampled negative audits, and quality monitoring
+</code></pre>
+<p>This is the proposed next implementation. In particular:</p>
+<ul>
+<li>Persist an input reference, model/prompt/configuration version, score, threshold, decision, attempt status, provider, latency, and billed cost. This allows an alert to be reconstructed after a model or threshold change.</li>
+<li>Treat malformed responses, missing token probabilities, timeouts, and exhausted retries as unresolved classifications. Route them to an explicit retry or manual-review path; counting them as negatives would conceal missed coverage.</li>
+<li>Use bounded retries and record every attempt. OpenRouter documents error codes and <code>Retry-After</code> handling for retryable responses; production handling should respect that signal. See the <a href="https://openrouter.ai/docs/api_reference/errors-and-debugging">OpenRouter error guide</a>.</li>
+<li>For the Gemma score method, retain provider and parameter requirements because the score depends on token log probabilities. A new provider or fallback configuration needs its own compatibility and quality checks. OpenRouter supports provider allowlists, <code>require_parameters</code>, and data-policy routing controls. See <a href="https://openrouter.ai/docs/guides/routing/provider-selection">provider routing documentation</a>.</li>
+<li>Establish approved access, retention, and processing locations for operational email. Verify that the intended provider supports the required data policy; no such production approval or endpoint capability is established by the benchmark. Model selection alone does not settle these requirements.</li>
+<li>Present a score, relevant message evidence, and any generated reason to a reviewer. Keep the human decision distinct from the classifier output. Track which alerts become useful cases and how long they take to review.</li>
+<li>If thread grouping or duplicate suppression is added, measure both reduced reviews and any cases lost. A claimed workload saving requires this measurement.</li>
+</ul>
+<p>Provider documentation was checked on 2 October 2026. The production design above is an engineering recommendation; it has not been implemented or tested as part of the offline evaluation.</p>
+<h2 id="8-transition-plan-and-release-criteria">8. Transition plan and release criteria</h2>
+<p>The following is a proposed four-to-six-week sequence after access and reviewers are available. It is a planning estimate, not a committed schedule or a measured project duration.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Accountable owner</th>
+<th>Deliverable</th>
+<th>Exit condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Define the operational task</td>
+<td>Business/monitoring lead, supported by data science</td>
+<td>Written label policy, scope, news treatment, review budget, and miss-cost priorities</td>
+<td>Stakeholders agree what an alert means and what coverage is required</td>
+</tr>
+<tr>
+<td>Build a representative labeled sample</td>
+<td>Data science lead and subject-matter reviewers</td>
+<td>Independently reviewed positives and sampled negatives; grouped duplicates/threads; chronological split</td>
+<td>Label disagreements resolved and enough positives collected for the planned precision of recall estimates</td>
+</tr>
+<tr>
+<td>Compare and freeze candidate configurations</td>
+<td>Data science lead</td>
+<td>JEV and Gemma score at validation-selected business cutoffs; calibration and confidence intervals</td>
+<td>Select one candidate whose validation results fit both recall and queue requirements</td>
+</tr>
+<tr>
+<td>Run shadow monitoring</td>
+<td>Engineering and operations</td>
+<td>Durable queue, complete attempt/cost logging, reviewer outcomes, end-to-end latency</td>
+<td>New locked sample and live measurements support the required quality, capacity, and reliability</td>
+</tr>
+<tr>
+<td>Decide on limited production</td>
+<td>Sponsor with data science and operations leads</td>
+<td>Signed operating choice, budget, alert policy, rollback owner</td>
+<td>Required targets are met, or the project reports the remaining gap and stops expansion</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="suggested-acceptance-scorecard">Suggested acceptance scorecard</h3>
+<p>Targets should be set before the pilot is scored. The values below distinguish measured outcomes from decisions management still needs to make.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Measure</th>
+<th>Pilot measurement</th>
+<th>Decision needed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Recall</td>
+<td>Estimate on independent positives, with a confidence interval and critical-category breakdown</td>
+<td>Minimum acceptable recall and how much uncertainty is acceptable</td>
+</tr>
+<tr>
+<td>Queue size and precision</td>
+<td>Alerts per 1,000 emails, true-alert fraction, and peak backlog</td>
+<td>Monthly review capacity and maximum acceptable backlog</td>
+</tr>
+<tr>
+<td>Case usefulness</td>
+<td>Distinct useful cases, duplicate alerts, escalation quality, reviewer time</td>
+<td>Minimum value per review; what counts as a useful case</td>
+</tr>
+<tr>
+<td>Delivery and failure behavior</td>
+<td>Arrival-to-alert p50/p95, unresolved fraction, retry counts, and recovery time</td>
+<td>Required alert latency and handling of unresolved messages</td>
+</tr>
+<tr>
+<td>Total cost</td>
+<td>All attempts, infrastructure, review hours, audit sampling, and follow-up</td>
+<td>Budget ceiling and acceptable cost per useful case</td>
+</tr>
+<tr>
+<td>Stability</td>
+<td>Quality by time window, source type, and message length; performance after provider/model changes</td>
+<td>Drift triggers, change approval, and rollback thresholds</td>
+</tr>
+</tbody>
+</table></div>
+<p>For sample-size planning, a simple binomial approximation at 90% recall needs about <strong>139 independent positives</strong> for a ±5 percentage-point 95% margin. This is only a planning approximation; cluster structure and subgroup evaluation may require more. At a true 1% prevalence, obtaining that many positives through simple random sampling would require roughly 13,900 emails on average. Enriching a recall evaluation with positives can help, but precision and workload still require a representative sample or appropriate weighting.</p>
+<h2 id="9-project-closeout-assessment">9. Project closeout assessment</h2>
+<p><strong>The project has delivered a defensible offline basis for choosing a pilot configuration.</strong> Gemma score provides the strongest observed combination of high recall and low inference cost among the individual models. JEV provides a more selective queue and higher measured AP than Gemma alone. Calibration offers interpretable score adjustments and additional operating choices, with explicit recall losses at the tested 0.5 cutoff. The score ensemble warrants a pilot comparison because it improves one observed operating point and ranking slightly, while failing to improve every target. Recovered reasoning is a promising but unconfirmed incremental improvement.</p>
+<p><strong>The outstanding investment decision is operational validation.</strong> Inference charges are small in this workload. The financial value will depend on whether alerts identify useful cases early enough to matter, how many alerts reviewers can handle, and how many important cases remain undetected. Those quantities should determine the production threshold and business case.</p>
+<p>The recommended handoff is a limited shadow pilot with a named owner, a representative labeled sample, a review budget, and pre-agreed acceptance targets. Expansion should follow demonstrated case value and capacity, using the same discipline applied to the offline comparison.</p>
+<h2 id="appendix-a-evidence-and-reproducibility">Appendix A. Evidence and reproducibility</h2>
+<h3 id="repository-artifacts">Repository artifacts</h3>
+<ul>
+<li><a href="https://github.com/kariato/GTPracticum/blob/main/EDA/jev_gemma4_all_runs_comparison.ipynb">All-runs comparison notebook</a>: saved benchmark metrics, calibration comparison, and recall/specificity analysis.</li>
+<li><a href="https://github.com/kariato/GTPracticum/blob/main/EDA/jev_gemma4_all_runs_comparison.html">All-runs HTML export</a>: downloadable notebook output.</li>
+<li><a href="https://github.com/kariato/GTPracticum/blob/main/reports/email_monitoring_metrics.json">Aggregate evidence for this report</a>: recomputed confusion counts, AP, Wilson intervals, latency summaries, cost components, scenarios, paired prediction changes, ensemble results, and input file hashes.</li>
+<li><a href="https://github.com/kariato/GTPracticum/blob/main/scripts/email_monitoring_analysis.py">Offline analysis script</a>: verifies matching source IDs, labels, and hashes, checks scores and calibration outputs, and rebuilds the aggregate evidence.</li>
+<li><a href="https://github.com/kariato/GTPracticum/blob/main/scripts/evaluate_confidence.py">Calibration implementation</a> and <a href="https://github.com/kariato/GTPracticum/blob/main/scripts/confidence_comparison.py">score collection/configuration</a>: calibration fitting, F1 threshold selection, and the token-score method.</li>
+<li><a href="https://github.com/kariato/GTPracticum/blob/main/scripts/gemma_reasoning_recovery.py">Recovery implementation</a>: retry provenance and cost accounting.</li>
+</ul>
+<p>The prediction CSVs, labels, and recovery journal remain in the Git-ignored <code>data/</code> directory. This report publishes aggregate findings and an input-hash manifest. Downloading the repository alone does not supply the row-level inputs required to rerun the analysis.</p>
+<h3 id="reproduction-commands">Reproduction commands</h3>
+<p>With the saved data available locally:</p>
+<pre><code class="language-bash">python3 -m scripts.email_monitoring_analysis
+</code></pre>
+<p>To re-fit calibration and regenerate its underlying evaluation, use an environment with NumPy:</p>
+<pre><code class="language-bash">python3 -m scripts.evaluate_confidence
+python3 -m scripts.email_monitoring_analysis
+</code></pre>
+<p>The calibration rerun was checked against the prior saved metrics. The final-report analysis checks all six complete workflows, four additional calibrated operating points, four validation recall-target choices, and the fixed score ensemble with both recall targets and hard-vote baselines. It reconstructs historical input hashes with the known line-ending variants, recomputes AP with tied scores grouped, verifies calibrated probabilities, and reconciles recovery charges with the attempt journal.</p>
+<p>To rebuild the HTML from this Markdown report, use an environment with <code>markdown-it-py</code>:</p>
+<pre><code class="language-bash">python3 scripts/render_report_html.py reports/email_monitoring_final_report.md
+</code></pre>
+<p>The Markdown and HTML are authored decision reports using the aggregate evidence. If new experiments change that evidence, review the narrative and recommendations as well as the tables before publishing a refreshed report.</p>
+<h3 id="metric-definitions">Metric definitions</h3>
+<pre><code class="language-text">Recall       = TP / (TP + FN)
+Precision    = TP / (TP + FP)
+Specificity  = TN / (TN + FP)
+False-positive rate = FP / (FP + TN)
+F1           = 2 × TP / (2 × TP + FP + FN)
+Alert count  = TP + FP
+</code></pre>
+<p>AP is the threshold-weighted precision integral over recall increments, grouping equal scores before each increment. All main test comparisons use the same 73 positives and 486 negatives. The exclude-news subsection explicitly changes the label policy or restricts the population, so its denominators are stated separately.</p>
+<h2 id="appendix-b-facts-assumptions-and-decisions">Appendix B. Facts, assumptions, and decisions</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Items</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Measured or reproduced</td>
+<td>Saved predictions and charges; benchmark confusion counts; ranking and calibration metrics; available successful-call latency; logged recovery attempts</td>
+</tr>
+<tr>
+<td>Scenario assumptions</td>
+<td>100,000 emails per month; 0.1%, 1%, or benchmark prevalence; constant recall/FPR under changed prevalence; three minutes per alert; $60 per review hour</td>
+</tr>
+<tr>
+<td>Not yet measured</td>
+<td>Operational prevalence; current-company performance; incident-level recall; reviewer time; full deployment cost; end-to-end throughput and latency; benefits of routing or grouping</td>
+</tr>
+<tr>
+<td>Management choices</td>
+<td>Relevant-email definition; acceptable misses; review capacity; cost of missed cases; processing requirements; pilot and expansion thresholds</td>
+</tr>
+</tbody>
+</table></div>
+<p>This separation is central to the recommendation: the measured benchmark supports selecting candidates, while the operating assumptions must be replaced with pilot evidence before a production business case is approved.</p>
+</article>
+<footer>Standalone report: text, tables, and styles are embedded for offline reading. Evidence links open the corresponding repository artifacts or external documentation.</footer>
+</main>
+</body>
+</html>
