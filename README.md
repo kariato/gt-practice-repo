@@ -4,6 +4,21 @@ A reproducible snapshot of the labelled email dataset, JEV and Gemma notebooks, 
 
 For a complete explanation of calibration, including the motivation, validation sampling, equations, fitting algorithm, worked example, metrics, threshold tradeoffs, and reproduction steps, read the [dedicated calibration guide](calibration/README.md).
 
+## Inkling 2 Mini reports
+
+Added on 22 November 2026 from source commit `3a052b7968000d56e264d812e14b8008ba729cc6`:
+
+- [Detailed performance, reasoning, cost, and reliability report](reports/inkling_2_mini_performance_report.md).
+- [Detailed prompt ambiguity and labeling audit](reports/inkling_prompt_and_labeling_audit.md), including all 21 changing emails and 126 saved classification explanations.
+- [Aggregate results and input hashes](reports/inkling_reasoning_evidence.json).
+- [Short results comparison](reports/inkling_reasoning_comparison.md) and [HTML case review](reports/inkling_reasoning_delta_review.html).
+
+These reports compare six Inkling reasoning settings with historical Gemma workflows. They preserve the original labels and document a contradictory duplicate-label pair, one unresolved high-setting response, recovery charges, and the limits of the comparison.
+
+This update publishes reports and aggregate evidence. The raw Inkling request journal, full-email review page, and source-project report builders are not included in this update. Reproduction instructions inside the reports describe the original source workspace and require those additional local artifacts; the older JEV/Gemma/Gemini replay instructions below retain their existing scope. The report statements about ignored data describe the source repository, while this public snapshot already includes the earlier curated datasets and experiment outputs.
+
+[REPORTS_MANIFEST.json](REPORTS_MANIFEST.json) records the source commit and hashes of the report bundle. The original `SOURCE_MANIFEST.json` and its snapshot provenance remain unchanged.
+
 ## What is being classified?
 
 Label **1** means the email substantively discusses or documents Enron accounting irregularities: misleading financial reporting, improper mark-to-market valuation, hidden losses, or misuse of special-purpose entities. Label **0** means unrelated or routine financial/accounting content without a substantive irregularity concern. A positive label indicates relevance for review, not proof of misconduct.

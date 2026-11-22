@@ -1,0 +1,43 @@
+{
+  "source_repository": "https://github.com/kariato/GTPracticum",
+  "source_commit": "3a052b7968000d56e264d812e14b8008ba729cc6",
+  "published_date": "2026-11-22",
+  "scope": "Inkling report bundle and aggregate evidence only. Raw Inkling request journals and source-only scripts were not copied. Existing public-repository data and the original SOURCE_MANIFEST.json are unchanged.",
+  "files": [
+    {
+      "path": "reports/inkling_2_mini_performance_report.md",
+      "source_sha256": "6bbff75fdefb9e8c40b74dff06662964e032b884309c727489ab7a0aecf69a14",
+      "published_sha256": "6bbff75fdefb9e8c40b74dff06662964e032b884309c727489ab7a0aecf69a14",
+      "bytes": 35618,
+      "adaptation": null
+    },
+    {
+      "path": "reports/inkling_prompt_and_labeling_audit.md",
+      "source_sha256": "858004b9b9ce666d32bbe749d6f0a3e536153682946a588af49538b83d63e58c",
+      "published_sha256": "34bc8258ec90347f5e699105f384332e96ed48d02e46bd8ee3306921ce55d367",
+      "bytes": 88262,
+      "adaptation": "Replaced source-project-only relative code hyperlink with a plain code reference."
+    },
+    {
+      "path": "reports/inkling_reasoning_comparison.md",
+      "source_sha256": "103cfcea9febf695a0030656bd8244b19713b75848af24d0db5c407a20362f50",
+      "published_sha256": "103cfcea9febf695a0030656bd8244b19713b75848af24d0db5c407a20362f50",
+      "bytes": 4891,
+      "adaptation": null
+    },
+    {
+      "path": "reports/inkling_reasoning_delta_review.html",
+      "source_sha256": "71e14b1ffc6b76602db9cf1555eee76fb278508046797a7144ebf8c751356cff",
+      "published_sha256": "71e14b1ffc6b76602db9cf1555eee76fb278508046797a7144ebf8c751356cff",
+      "bytes": 57404,
+      "adaptation": null
+    },
+    {
+      "path": "reports/inkling_reasoning_evidence.json",
+      "source_sha256": "1b50e569d8266421b1376f3dd4b70bed9607a9bd82ec2d46bd0c57f58c5f68b5",
+      "published_sha256": "1b50e569d8266421b1376f3dd4b70bed9607a9bd82ec2d46bd0c57f58c5f68b5",
+      "bytes": 128827,
+      "adaptation": null
+    }
+  ]
+}
